@@ -33,12 +33,12 @@ ARGUMENTS:
 NOTE: Remote Cassandra service restart
 
 This script uses the following comand to restart a remote cassandra node:
-	ssh -s {node} /sbin/service cassandra restart. 
+	ssh -n {node} /sbin/service cassandra restart. 
 
 This reqires that your environment be set up properly with remote ssh keys 
 or you may be required to type a password.  You can set an environment variable 
 to utilize a different command
-CASSANDRA_RESTART_COMMAND='ssh -s ${node} /sbin/service cassandra restart'
+CASSANDRA_RESTART_COMMAND='ssh -n ${node} /sbin/service cassandra restart'
 
       
 Example:
@@ -75,7 +75,7 @@ if [[ "$1" == "--ccm" ]]; then
 fi
 
 if [[ -z "$CASSANDRA_RESTART_COMMAND" ]]; then
-	CASSANDRA_RESTART_COMMAND='ssh -s ${node} /sbin/service cassandra restart'
+	CASSANDRA_RESTART_COMMAND='ssh -n ${node} /sbin/service cassandra restart'
 fi
 
 CASSANDRA_NODETOOL_COMMAND='${DIRECTORY}/bin/nodetool -h ${node} -p ${JMX_PORT} '
