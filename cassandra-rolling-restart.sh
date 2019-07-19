@@ -42,7 +42,7 @@ CASSANDRA_RESTART_COMMAND='ssh -n ${node} /sbin/service cassandra restart'
 
       
 Example:
-	$0 ./cassandra-2.0.19 30s
+	$0 ./cassandra-2.0.19 7199 30s
 
 EOF
 }
