@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # exit on any error
-#set -e
+set -e
 
 function usage()
 {
@@ -95,16 +95,33 @@ function wait_up()
 	done
 }
 
+function check_cluster_up()
+{
+local cluster_status
+local abnormal_count
+
+	cluster_status=$(eval "$CASSANDRA_NODETOOL_COMMAND status")
+	abnormal_count=$(echo "$cluster_status" | grep -E "^.L|^.J|^.M|^DN" | wc -l)
+
+	if [[ "$abnormal_count" != "0" ]]; then
+		echo "Aborting! All cluster nodes are not up!"
+		echo
+		echo "$cluster_status"
+		exit 1
+	fi
+}
 
 echo "Getting listen_address for this node..."
 listen_address=$(grep "^listen_address:" ${DIRECTORY}/conf/cassandra.yaml | cut -d ':' -f2)
+node=$listen_address
 
 echo "This node is listening on ${listen_address}"
 echo
 
 echo "Getting list of nodes in the cluster..."
-node=$listen_address
-nodes="$(eval "$CASSANDRA_NODETOOL_COMMAND status" | grep -E "^UN" | awk '{print $2}')"
+check_cluster_up
+
+nodes=$(eval "$CASSANDRA_NODETOOL_COMMAND status" | grep "^UN" | awk '{print $2}')
 echo "This script will perform a rolling restart on the following nodes:"
 echo "$nodes"
 echo ""
@@ -132,4 +149,4 @@ while IFS= read -r node; do
 
 done <<<"${nodes}"
 
-echo "Done with Cassandra cluster rolling restart!
+echo "Done with Cassandra cluster rolling restart!"
