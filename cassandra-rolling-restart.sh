@@ -23,7 +23,7 @@ See the below note on how this script remotely restarts the cassandra service.
 
 ARGUMENTS:
 
-  cassanra-install-directory   full or relative path of install directory
+  cassandra-install-directory  full or relative path of install directory
                                nodetool should be located in a subdirectory
                                called "bin", yaml configuration should be
                                in conf/cassandra.yaml
@@ -68,6 +68,8 @@ if [[ ! -z "$1" ]]; then
 	shift
 fi
 
+# If last parameter is --ccm we can use CCM to start and stop nodes
+# this is mostly for testing.
 if [[ "$1" == "--ccm" ]]; then
 	CCM=1
 	ccm_index=1
@@ -85,12 +87,30 @@ if [[ $CCM == "1" ]]; then
 	CASSANDRA_NODETOOL_COMMAND='${DIRECTORY}/bin/nodetool -h 127.0.0.1 -p ${JMX_PORT} '
 fi
 
+function is_up()
+{
+	local node=$1
+        local output
+	local nodestat
+        output=$(eval "$CASSANDRA_NODETOOL_COMMAND status"  2>&1)
+        if [[ "$?" == "1" ]]; then
+		return 1
+	else
+		nodestat="$(echo "${output}" | grep "${node}" | awk '{print $1}')"
+		if [[ "${nodestat}" != "UN" ]]; then
+			return 1
+		else
+			return 0
+		fi
+	fi
+}
 
 function wait_up()
 {
 	local node=$1
+	local output
 	echo "Waiting for ${node} to rejoin the ring..."
-	while [[ "$(eval "$CASSANDRA_NODETOOL_COMMAND status" | grep "${node}" | awk '{print $1}')" != "UN" ]]; do
+	until is_up ${node}; do
 		sleep 5s
 	done
 }
